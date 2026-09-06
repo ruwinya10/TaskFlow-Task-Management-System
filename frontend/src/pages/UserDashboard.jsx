@@ -17,6 +17,8 @@ import api from "../services/api";
 
 import { useAuth } from "../context/AuthContext";
 
+import { getTaskPermissions } from "../utils/taskPermissions";
+
 import TaskColumn from "../components/TaskColumn";
 import TaskModal from "../components/TaskModal";
 
@@ -42,6 +44,8 @@ const UserDashboard = () => {
     const {
         user
     } = useAuth();
+
+    const currentUserId = user?._id || user?.id;
 
 
     const [tasks, setTasks] = useState([]);
@@ -179,6 +183,39 @@ const UserDashboard = () => {
 
 
     // =========================
+    // ASSIGN TO SELF
+    // =========================
+
+    const handleAssignToSelf = async (taskId) => {
+
+        try {
+
+            const response = await api.patch(
+                `/tasks/${taskId}/assign`,
+                {
+                    userId: currentUserId
+                }
+            );
+
+            setTasks((current) =>
+                current.map((item) =>
+                    item._id === taskId
+                        ? response.data
+                        : item
+                )
+            );
+
+        } catch (error) {
+
+            alert(
+                error.response?.data?.message ||
+                "Failed to assign task"
+            );
+        }
+    };
+
+
+    // =========================
     // DRAG AND DROP
     // =========================
 
@@ -205,6 +242,16 @@ const UserDashboard = () => {
 
 
         if (!task) {
+            return;
+        }
+
+
+        const permissions = getTaskPermissions(
+            task,
+            currentUserId
+        );
+
+        if (!permissions.canMove) {
             return;
         }
 
@@ -373,11 +420,15 @@ const UserDashboard = () => {
                                     task.status ===
                                     column.id
                             )}
+                            currentUserId={currentUserId}
                             onDelete={
                                 handleDeleteTask
                             }
                             onEdit={
                                 openEditModal
+                            }
+                            onAssignToSelf={
+                                handleAssignToSelf
                             }
                         />
 

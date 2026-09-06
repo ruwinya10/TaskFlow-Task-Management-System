@@ -6,12 +6,42 @@ import {
     CSS
 } from "@dnd-kit/utilities";
 
+import {
+    getTaskPermissions
+} from "../utils/taskPermissions";
+
+
+const statusLabels = {
+    todo: "To Do",
+    doing: "Doing",
+    done: "Done"
+};
+
+
+const formatDate = (dateString) => {
+    if (!dateString) {
+        return "Unknown";
+    }
+
+    return new Date(dateString).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+    });
+};
+
 
 const TaskCard = ({
     task,
+    currentUserId,
     onDelete,
-    onEdit
+    onEdit,
+    onAssignToSelf
 }) => {
+
+    const permissions = getTaskPermissions(
+        task,
+        currentUserId
+    );
 
     const {
         attributes,
@@ -20,7 +50,8 @@ const TaskCard = ({
         transform,
         transition
     } = useSortable({
-        id: task._id
+        id: task._id,
+        disabled: !permissions.canMove
     });
 
 
@@ -38,9 +69,9 @@ const TaskCard = ({
         >
 
             <div
-                className="drag-area"
-                {...attributes}
-                {...listeners}
+                className={`drag-area ${!permissions.canMove ? "disabled" : ""}`}
+                {...(permissions.canMove ? attributes : {})}
+                {...(permissions.canMove ? listeners : {})}
             >
                 <span>⋮⋮</span>
             </div>
@@ -48,9 +79,18 @@ const TaskCard = ({
 
             <div className="task-content">
 
-                <h3>
-                    {task.title}
-                </h3>
+                <div className="task-card-header">
+
+                    <h3>
+                        {task.title}
+                    </h3>
+
+                    <span className={`status-badge ${task.status}`}>
+                        {statusLabels[task.status] ||
+                            task.status}
+                    </span>
+
+                </div>
 
                 <p>
                     {task.description ||
@@ -59,6 +99,11 @@ const TaskCard = ({
 
 
                 <div className="task-info">
+
+                    <small>
+                        Created:{" "}
+                        {formatDate(task.createdAt)}
+                    </small>
 
                     <small>
                         Created by:{" "}
@@ -79,27 +124,54 @@ const TaskCard = ({
                 </div>
 
 
-                <div className="task-actions">
+                {(permissions.canEdit ||
+                    permissions.canDelete ||
+                    permissions.canSelfAssign) && (
 
-                    <button
-                        onClick={() =>
-                            onEdit(task)
-                        }
-                    >
-                        Edit
-                    </button>
+                    <div className="task-actions">
+
+                        {permissions.canSelfAssign && (
+
+                            <button
+                                onClick={() =>
+                                    onAssignToSelf(task._id)
+                                }
+                                className="assign-button"
+                            >
+                                Assign to me
+                            </button>
+
+                        )}
+
+                        {permissions.canEdit && (
+
+                            <button
+                                onClick={() =>
+                                    onEdit(task)
+                                }
+                            >
+                                Edit
+                            </button>
+
+                        )}
 
 
-                    <button
-                        onClick={() =>
-                            onDelete(task._id)
-                        }
-                        className="delete-button"
-                    >
-                        Delete
-                    </button>
+                        {permissions.canDelete && (
 
-                </div>
+                            <button
+                                onClick={() =>
+                                    onDelete(task._id)
+                                }
+                                className="delete-button"
+                            >
+                                Delete
+                            </button>
+
+                        )}
+
+                    </div>
+
+                )}
 
             </div>
 

@@ -9,8 +9,10 @@ const TaskColumn = ({
     id,
     title,
     tasks,
+    currentUserId,
     onDelete,
-    onEdit
+    onEdit,
+    onAssignToSelf
 }) => {
 
     const {
@@ -52,8 +54,10 @@ const TaskColumn = ({
                         <TaskCard
                             key={task._id}
                             task={task}
+                            currentUserId={currentUserId}
                             onDelete={onDelete}
                             onEdit={onEdit}
+                            onAssignToSelf={onAssignToSelf}
                         />
 
                     ))

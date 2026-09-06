@@ -2,6 +2,29 @@ const Task = require("../models/Task");
 const User = require("../models/User");
 
 
+const canManageTask = (task, userId) => {
+    const isCreator = task.creator.toString() === userId;
+    const assignedId = task.assignedUser
+        ? task.assignedUser.toString()
+        : null;
+
+    return isCreator && (!assignedId || assignedId === userId);
+};
+
+
+const canChangeTaskStatus = (task, userId) => {
+    const assignedId = task.assignedUser
+        ? task.assignedUser.toString()
+        : null;
+
+    if (assignedId) {
+        return assignedId === userId;
+    }
+
+    return task.creator.toString() === userId;
+};
+
+
 // ========================
 // CREATE TASK
 // ========================
@@ -143,13 +166,13 @@ const updateTask = async (req, res) => {
         }
 
         // Admin can update any task
-        if (req.user.role !== "admin") {
-
-            if (task.creator.toString() !== req.user.id) {
-                return res.status(403).json({
-                    message: "You can only manage your own tasks"
-                });
-            }
+        if (
+            req.user.role !== "admin" &&
+            !canManageTask(task, req.user.id)
+        ) {
+            return res.status(403).json({
+                message: "You can only manage your own unassigned or self-assigned tasks"
+            });
         }
 
         if (title !== undefined) {
@@ -192,13 +215,13 @@ const deleteTask = async (req, res) => {
         }
 
         // Admin can delete any task
-        if (req.user.role !== "admin") {
-
-            if (task.creator.toString() !== req.user.id) {
-                return res.status(403).json({
-                    message: "You can only delete your own tasks"
-                });
-            }
+        if (
+            req.user.role !== "admin" &&
+            !canManageTask(task, req.user.id)
+        ) {
+            return res.status(403).json({
+                message: "You can only delete your own unassigned or self-assigned tasks"
+            });
         }
 
         await task.deleteOne();
@@ -243,22 +266,13 @@ const updateStatus = async (req, res) => {
         }
 
         // Admin can change any task
-        if (req.user.role !== "admin") {
-
-            const creatorId = task.creator.toString();
-
-            const assignedId = task.assignedUser
-                ? task.assignedUser.toString()
-                : null;
-
-            if (
-                creatorId !== req.user.id &&
-                assignedId !== req.user.id
-            ) {
-                return res.status(403).json({
-                    message: "You do not have permission to change this task"
-                });
-            }
+        if (
+            req.user.role !== "admin" &&
+            !canChangeTaskStatus(task, req.user.id)
+        ) {
+            return res.status(403).json({
+                message: "You do not have permission to change this task status"
+            });
         }
 
         task.status = status;
