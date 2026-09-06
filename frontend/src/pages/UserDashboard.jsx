@@ -1,12 +1,16 @@
 import {
     useEffect,
+    useRef,
     useState
 } from "react";
 
 import {
     DndContext,
     DragOverlay,
-    closestCorners
+    PointerSensor,
+    closestCorners,
+    useSensor,
+    useSensors
 } from "@dnd-kit/core";
 
 import {
@@ -62,6 +66,18 @@ const UserDashboard = () => {
 
     const [editingTask, setEditingTask] =
         useState(null);
+
+    const dragOriginStatusRef = useRef(null);
+    const tasksDuringDragRef = useRef(null);
+
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8
+            }
+        })
+    );
 
 
     // =========================
@@ -219,7 +235,21 @@ const UserDashboard = () => {
     // DRAG AND DROP
     // =========================
 
-    const handleDragEnd = async (event) => {
+    const handleDragStart = (event) => {
+
+        const task = tasks.find(
+            (item) =>
+                item._id === event.active.id
+        );
+
+        dragOriginStatusRef.current =
+            task?.status ?? null;
+
+        tasksDuringDragRef.current = tasks;
+    };
+
+
+    const handleDragOver = (event) => {
 
         const {
             active,
@@ -232,12 +262,193 @@ const UserDashboard = () => {
         }
 
 
-        const taskId = active.id;
+        const activeId = active.id;
+        const overId = over.id;
 
 
-        const task = tasks.find(
+        if (activeId === overId) {
+            return;
+        }
+
+
+        setTasks((current) => {
+
+            const activeIndex = current.findIndex(
+                (item) =>
+                    item._id === activeId
+            );
+
+
+            if (activeIndex === -1) {
+                return current;
+            }
+
+
+            const activeTask = current[activeIndex];
+            const overColumn = columns.find(
+                (column) =>
+                    column.id === overId
+            );
+
+            let next = current;
+
+
+            if (overColumn) {
+
+                if (
+                    activeTask.status ===
+                    overColumn.id
+                ) {
+                    return current;
+                }
+
+
+                const updated = current.map(
+                    (item) =>
+                        item._id === activeId
+                            ? {
+                                ...item,
+                                status: overColumn.id
+                            }
+                            : item
+                );
+
+
+                const movedTask = updated[activeIndex];
+
+                const withoutActive = updated.filter(
+                    (item) =>
+                        item._id !== activeId
+                );
+
+
+                const columnTasks = withoutActive.filter(
+                    (item) =>
+                        item.status === overColumn.id
+                );
+
+
+                if (columnTasks.length === 0) {
+                    next = [
+                        ...withoutActive,
+                        movedTask
+                    ];
+                } else {
+
+                    const lastTaskInColumn =
+                        columnTasks[columnTasks.length - 1];
+
+                    const insertIndex =
+                        withoutActive.findIndex(
+                            (item) =>
+                                item._id ===
+                                lastTaskInColumn._id
+                        ) + 1;
+
+
+                    const reordered = [
+                        ...withoutActive
+                    ];
+
+                    reordered.splice(
+                        insertIndex,
+                        0,
+                        movedTask
+                    );
+
+                    next = reordered;
+                }
+
+            } else {
+
+                const overIndex = current.findIndex(
+                    (item) =>
+                        item._id === overId
+                );
+
+
+                if (overIndex === -1) {
+                    return current;
+                }
+
+
+                const overTask = current[overIndex];
+
+
+                if (
+                    activeTask.status !==
+                    overTask.status
+                ) {
+
+                    const updated = current.map(
+                        (item) =>
+                            item._id === activeId
+                                ? {
+                                    ...item,
+                                    status: overTask.status
+                                }
+                                : item
+                    );
+
+
+                    const newActiveIndex = updated.findIndex(
+                        (item) =>
+                            item._id === activeId
+                    );
+
+
+                    next = arrayMove(
+                        updated,
+                        newActiveIndex,
+                        overIndex
+                    );
+
+                } else {
+
+                    next = arrayMove(
+                        current,
+                        activeIndex,
+                        overIndex
+                    );
+                }
+            }
+
+
+            tasksDuringDragRef.current = next;
+            return next;
+        });
+    };
+
+
+    const handleDragEnd = async (event) => {
+
+        const {
+            active,
+            over
+        } = event;
+
+
+        const originalStatus =
+            dragOriginStatusRef.current;
+
+        dragOriginStatusRef.current = null;
+
+
+        if (!over) {
+            tasksDuringDragRef.current = null;
+            return;
+        }
+
+
+        const currentTasks =
+            tasksDuringDragRef.current ?? tasks;
+
+        tasksDuringDragRef.current = null;
+
+
+        const task = currentTasks.find(
             (item) =>
-                item._id === taskId
+                item._id === active.id
         );
 
 
@@ -251,78 +462,35 @@ const UserDashboard = () => {
             currentUserId
         );
 
+
         if (!permissions.canMove) {
+            fetchTasks();
             return;
         }
 
 
-        let newStatus = over.id;
-
-
-        // If dropped over another task,
-        // use that task's status.
-        const targetTask = tasks.find(
-            (item) =>
-                item._id === over.id
-        );
-
-
-        if (targetTask) {
-
-            newStatus =
-                targetTask.status;
-        }
-
-
-        const validStatuses = [
-            "todo",
-            "doing",
-            "done"
-        ];
+        setTasks(currentTasks);
 
 
         if (
-            !validStatuses.includes(
-                newStatus
-            )
+            !originalStatus ||
+            task.status === originalStatus
         ) {
             return;
         }
-
-
-        if (
-            task.status === newStatus
-        ) {
-            return;
-        }
-
-
-        // Optimistic UI update
-        setTasks((current) =>
-            current.map((item) =>
-                item._id === taskId
-                    ? {
-                        ...item,
-                        status: newStatus
-                    }
-                    : item
-            )
-        );
 
 
         try {
 
             await api.patch(
-                `/tasks/${taskId}/status`,
+                `/tasks/${task._id}/status`,
                 {
-                    status: newStatus
+                    status: task.status
                 }
             );
 
         } catch (error) {
 
-            // If backend fails,
-            // restore database version
             fetchTasks();
 
             alert(
@@ -403,7 +571,10 @@ const UserDashboard = () => {
 
 
             <DndContext
+                sensors={sensors}
                 collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
 

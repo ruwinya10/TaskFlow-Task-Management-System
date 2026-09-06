@@ -2,6 +2,11 @@ import {
     useDroppable
 } from "@dnd-kit/core";
 
+import {
+    SortableContext,
+    verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+
 import TaskCard from "./TaskCard";
 
 
@@ -41,28 +46,35 @@ const TaskColumn = ({
 
             <div className="task-list">
 
-                {tasks.length === 0 ? (
+                <SortableContext
+                    items={tasks.map((task) => task._id)}
+                    strategy={verticalListSortingStrategy}
+                >
 
-                    <div className="empty-column">
-                        Drop tasks here
-                    </div>
+                    {tasks.length === 0 ? (
 
-                ) : (
+                        <div className="empty-column">
+                            Drop tasks here
+                        </div>
 
-                    tasks.map((task) => (
+                    ) : (
 
-                        <TaskCard
-                            key={task._id}
-                            task={task}
-                            currentUserId={currentUserId}
-                            onDelete={onDelete}
-                            onEdit={onEdit}
-                            onAssignToSelf={onAssignToSelf}
-                        />
+                        tasks.map((task) => (
 
-                    ))
+                            <TaskCard
+                                key={task._id}
+                                task={task}
+                                currentUserId={currentUserId}
+                                onDelete={onDelete}
+                                onEdit={onEdit}
+                                onAssignToSelf={onAssignToSelf}
+                            />
 
-                )}
+                        ))
+
+                    )}
+
+                </SortableContext>
 
             </div>
 

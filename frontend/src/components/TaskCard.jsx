@@ -65,14 +65,12 @@ const TaskCard = ({
         <div
             ref={setNodeRef}
             style={style}
-            className="task-card"
+            className={`task-card ${permissions.canMove ? "draggable" : "not-draggable"}`}
+            {...(permissions.canMove ? attributes : {})}
+            {...(permissions.canMove ? listeners : {})}
         >
 
-            <div
-                className={`drag-area ${!permissions.canMove ? "disabled" : ""}`}
-                {...(permissions.canMove ? attributes : {})}
-                {...(permissions.canMove ? listeners : {})}
-            >
+            <div className="drag-area">
                 <span>⋮⋮</span>
             </div>
 
@@ -128,7 +126,12 @@ const TaskCard = ({
                     permissions.canDelete ||
                     permissions.canSelfAssign) && (
 
-                    <div className="task-actions">
+                    <div
+                        className="task-actions"
+                        onPointerDown={(event) =>
+                            event.stopPropagation()
+                        }
+                    >
 
                         {permissions.canSelfAssign && (
 

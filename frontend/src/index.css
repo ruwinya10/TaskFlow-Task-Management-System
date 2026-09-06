@@ -439,24 +439,29 @@ select:focus {
 }
 
 
-.drag-area {
+.task-card.draggable {
     cursor: grab;
 
-    color: #9ca3af;
-
-    padding-top: 3px;
+    touch-action: none;
 }
 
 
-.drag-area:active {
+.task-card.draggable:active {
     cursor: grabbing;
 }
 
 
-.drag-area.disabled {
-    cursor: not-allowed;
+.task-card.not-draggable {
+    cursor: default;
+}
 
-    opacity: 0.35;
+
+.drag-area {
+    color: #9ca3af;
+
+    padding-top: 3px;
+
+    pointer-events: none;
 }
 
 
