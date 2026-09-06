@@ -68,6 +68,7 @@ const AdminLayout = () => {
                         <NavLink
                             key={item.to}
                             to={item.to}
+                            title={item.label}
                             className={({
                                 isActive
                             }) =>
@@ -79,7 +80,9 @@ const AdminLayout = () => {
                                 {item.icon}
                             </span>
 
-                            {item.label}
+                            <span className="sidebar-link-label">
+                                {item.label}
+                            </span>
 
                         </NavLink>
 
@@ -91,8 +94,14 @@ const AdminLayout = () => {
                     <button
                         onClick={handleLogout}
                         className="sidebar-logout-button"
+                        title="Logout"
                     >
-                        Logout
+                        <span className="sidebar-logout-icon">
+                            ↪
+                        </span>
+                        <span className="sidebar-logout-label">
+                            Logout
+                        </span>
                     </button>
                 </div>
 

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.webp";
@@ -58,31 +58,37 @@ const Navbar = () => {
 
                     {user.role === "admin" ? (
 
-                        <Link
+                        <NavLink
                             to="/admin/dashboard"
-                            className="nav-link-button"
+                            className={({ isActive }) =>
+                                `nav-link-button ${isActive ? "active" : ""}`
+                            }
                         >
                             Admin
-                        </Link>
+                        </NavLink>
 
                     ) : (
 
                         <>
 
-                            <Link
+                            <NavLink
                                 to="/dashboard"
-                                className="nav-link-button"
+                                className={({ isActive }) =>
+                                    `nav-link-button ${isActive ? "active" : ""}`
+                                }
                             >
                                 Dashboard
-                            </Link>
+                            </NavLink>
 
 
-                            <Link
+                            <NavLink
                                 to="/board"
-                                className="nav-link-button"
+                                className={({ isActive }) =>
+                                    `nav-link-button ${isActive ? "active" : ""}`
+                                }
                             >
                                 Task Board
-                            </Link>
+                            </NavLink>
 
                         </>
 
