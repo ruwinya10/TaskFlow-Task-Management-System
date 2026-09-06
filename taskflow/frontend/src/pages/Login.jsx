@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.webp";
 
 
 const Login = () => {
@@ -69,7 +70,10 @@ const Login = () => {
 
             <div className="auth-card">
 
-                <h1>Less Taxi</h1>
+                <div className="auth-brand">
+                    <img src={logo} alt="TaskFlow logo" />
+                    <h1>TaskFlow</h1>
+                </div>
 
                 <h2>Login</h2>
 

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.webp";
 
 
 const Navbar = () => {
@@ -26,13 +27,18 @@ const Navbar = () => {
             ? "/admin/dashboard"
             : "/dashboard";
 
+    if (user?.role === "admin") {
+        return null;
+    }
+
 
     return (
         <nav className="navbar">
 
             <div className="navbar-brand">
                 <Link to={homePath}>
-                    Less Taxi
+                    <img src={logo} alt="TaskFlow logo" />
+                    <span>TaskFlow</span>
                 </Link>
             </div>
 
