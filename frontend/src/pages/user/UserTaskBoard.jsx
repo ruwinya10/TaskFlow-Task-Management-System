@@ -1,12 +1,12 @@
 import {
     useEffect,
+    useMemo,
     useRef,
     useState
 } from "react";
 
 import {
     DndContext,
-    DragOverlay,
     PointerSensor,
     closestCorners,
     useSensor,
@@ -17,14 +17,17 @@ import {
     arrayMove
 } from "@dnd-kit/sortable";
 
-import api from "../services/api";
+import { Link } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
+import api from "../../services/api";
 
-import { getTaskPermissions } from "../utils/taskPermissions";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 
-import TaskColumn from "../components/TaskColumn";
-import TaskModal from "../components/TaskModal";
+import { getTaskPermissions } from "../../utils/taskPermissions";
+
+import TaskColumn from "../../components/TaskColumn";
+import TaskModal from "../../components/TaskModal";
 
 
 const columns = [
@@ -43,29 +46,27 @@ const columns = [
 ];
 
 
-const UserDashboard = () => {
+const UserTaskBoard = () => {
 
-    const {
-        user
-    } = useAuth();
+    const { user } = useAuth();
 
     const currentUserId = user?._id || user?.id;
 
+    const { showToast } = useToast();
+
 
     const [tasks, setTasks] = useState([]);
-
-    const [loading, setLoading] =
-        useState(true);
-
-    const [error, setError] =
-        useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
 
-    const [modalOpen, setModalOpen] =
-        useState(false);
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [viewFilter, setViewFilter] = useState("all");
 
-    const [editingTask, setEditingTask] =
-        useState(null);
+
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
 
     const dragOriginStatusRef = useRef(null);
     const tasksDuringDragRef = useRef(null);
@@ -80,10 +81,6 @@ const UserDashboard = () => {
     );
 
 
-    // =========================
-    // GET TASKS
-    // =========================
-
     const fetchTasks = async () => {
 
         try {
@@ -97,15 +94,15 @@ const UserDashboard = () => {
 
         } catch (error) {
 
-            setError(
+            const message =
                 error.response?.data?.message ||
-                "Failed to load tasks"
-            );
+                "Failed to load tasks";
+
+            setError(message);
+            showToast(message, "error");
 
         } finally {
-
             setLoading(false);
-
         }
     };
 
@@ -117,9 +114,74 @@ const UserDashboard = () => {
     }, []);
 
 
-    // =========================
-    // CREATE / UPDATE TASK
-    // =========================
+    const filteredTasks = useMemo(() => {
+
+        return tasks.filter((task) => {
+
+            const creatorId =
+                task.creator?._id?.toString() ||
+                task.creator?.toString();
+
+            const assignedId =
+                task.assignedUser?._id?.toString() ||
+                task.assignedUser?.toString() ||
+                null;
+
+
+            const matchesSearch =
+                task.title
+                    .toLowerCase()
+                    .includes(search.toLowerCase()) ||
+                (task.description || "")
+                    .toLowerCase()
+                    .includes(search.toLowerCase());
+
+
+            const matchesStatus =
+                statusFilter === "all" ||
+                task.status === statusFilter;
+
+
+            const matchesView =
+                viewFilter === "all" ||
+                (viewFilter === "created" &&
+                    creatorId === currentUserId) ||
+                (viewFilter === "assigned" &&
+                    assignedId === currentUserId) ||
+                (viewFilter === "unassigned" &&
+                    creatorId === currentUserId &&
+                    !assignedId);
+
+
+            return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesView
+            );
+        });
+
+    }, [
+        tasks,
+        search,
+        statusFilter,
+        viewFilter,
+        currentUserId
+    ]);
+
+
+    const visibleColumns = useMemo(() => {
+
+        if (statusFilter === "all") {
+            return columns;
+        }
+
+        return columns.filter(
+            (column) =>
+                column.id === statusFilter
+        );
+
+    }, [statusFilter]);
+
 
     const handleSaveTask = async (data) => {
 
@@ -132,11 +194,21 @@ const UserDashboard = () => {
                     data
                 );
 
+                showToast(
+                    "Task updated successfully",
+                    "success"
+                );
+
             } else {
 
                 await api.post(
                     "/tasks",
                     data
+                );
+
+                showToast(
+                    "Task created successfully",
+                    "success"
                 );
 
             }
@@ -149,18 +221,14 @@ const UserDashboard = () => {
 
         } catch (error) {
 
-            alert(
+            showToast(
                 error.response?.data?.message ||
-                "Failed to save task"
+                "Failed to save task",
+                "error"
             );
-
         }
     };
 
-
-    // =========================
-    // DELETE TASK
-    // =========================
 
     const handleDeleteTask = async (taskId) => {
 
@@ -188,19 +256,21 @@ const UserDashboard = () => {
                 )
             );
 
+            showToast(
+                "Task deleted successfully",
+                "success"
+            );
+
         } catch (error) {
 
-            alert(
+            showToast(
                 error.response?.data?.message ||
-                "Failed to delete task"
+                "Failed to delete task",
+                "error"
             );
         }
     };
 
-
-    // =========================
-    // ASSIGN TO SELF
-    // =========================
 
     const handleAssignToSelf = async (taskId) => {
 
@@ -221,19 +291,21 @@ const UserDashboard = () => {
                 )
             );
 
+            showToast(
+                "Task assigned to you successfully",
+                "success"
+            );
+
         } catch (error) {
 
-            alert(
+            showToast(
                 error.response?.data?.message ||
-                "Failed to assign task"
+                "Failed to assign task",
+                "error"
             );
         }
     };
 
-
-    // =========================
-    // DRAG AND DROP
-    // =========================
 
     const handleDragStart = (event) => {
 
@@ -251,11 +323,7 @@ const UserDashboard = () => {
 
     const handleDragOver = (event) => {
 
-        const {
-            active,
-            over
-        } = event;
-
+        const { active, over } = event;
 
         if (!over) {
             return;
@@ -315,7 +383,6 @@ const UserDashboard = () => {
 
 
                 const movedTask = updated[activeIndex];
-
                 const withoutActive = updated.filter(
                     (item) =>
                         item._id !== activeId
@@ -422,11 +489,7 @@ const UserDashboard = () => {
 
     const handleDragEnd = async (event) => {
 
-        const {
-            active,
-            over
-        } = event;
-
+        const { active, over } = event;
 
         const originalStatus =
             dragOriginStatusRef.current;
@@ -465,6 +528,10 @@ const UserDashboard = () => {
 
         if (!permissions.canMove) {
             fetchTasks();
+            showToast(
+                "You don't have permission to move this task",
+                "warning"
+            );
             return;
         }
 
@@ -489,47 +556,44 @@ const UserDashboard = () => {
                 }
             );
 
+            showToast(
+                "Task status updated",
+                "success"
+            );
+
         } catch (error) {
 
             fetchTasks();
 
-            alert(
+            showToast(
                 error.response?.data?.message ||
-                "Failed to update task status"
+                "Failed to update task status",
+                "error"
             );
         }
     };
 
 
-    // =========================
-    // OPEN CREATE MODAL
-    // =========================
-
     const openCreateModal = () => {
 
         setEditingTask(null);
-
         setModalOpen(true);
     };
 
 
-    // =========================
-    // OPEN EDIT MODAL
-    // =========================
-
     const openEditModal = (task) => {
 
         setEditingTask(task);
-
         setModalOpen(true);
     };
 
 
     if (loading) {
-
         return (
             <div className="page-container">
-                <p>Loading tasks...</p>
+                <p className="loading-text">
+                    Loading task board...
+                </p>
             </div>
         );
     }
@@ -541,24 +605,90 @@ const UserDashboard = () => {
             <div className="dashboard-header">
 
                 <div>
-
-                    <h1>
-                        My Task Board
-                    </h1>
-
+                    <h1>Task Board</h1>
                     <p>
-                        Welcome, {user.name}
+                        Drag and drop tasks between columns
                     </p>
-
                 </div>
 
 
-                <button
-                    onClick={openCreateModal}
-                    className="primary-button"
+                <div className="header-actions">
+
+                    <Link
+                        to="/dashboard"
+                        className="secondary-button"
+                    >
+                        Dashboard
+                    </Link>
+
+
+                    <button
+                        onClick={openCreateModal}
+                        className="primary-button"
+                    >
+                        + Create Task
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div className="filter-bar filter-bar-inline">
+
+                <input
+                    type="text"
+                    className="filter-input"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={(event) =>
+                        setSearch(event.target.value)
+                    }
+                />
+
+
+                <select
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(event) =>
+                        setStatusFilter(event.target.value)
+                    }
                 >
-                    + Create Task
-                </button>
+                    <option value="all">
+                        All Statuses
+                    </option>
+                    <option value="todo">
+                        To Do
+                    </option>
+                    <option value="doing">
+                        Doing
+                    </option>
+                    <option value="done">
+                        Done
+                    </option>
+                </select>
+
+
+                <select
+                    className="filter-select"
+                    value={viewFilter}
+                    onChange={(event) =>
+                        setViewFilter(event.target.value)
+                    }
+                >
+                    <option value="all">
+                        All Tasks
+                    </option>
+                    <option value="created">
+                        Created by Me
+                    </option>
+                    <option value="assigned">
+                        Assigned to Me
+                    </option>
+                    <option value="unassigned">
+                        My Unassigned
+                    </option>
+                </select>
 
             </div>
 
@@ -578,29 +708,25 @@ const UserDashboard = () => {
                 onDragEnd={handleDragEnd}
             >
 
-                <div className="board">
+                <div
+                    className={`board ${visibleColumns.length === 1 ? "board-single" : ""}`}
+                >
 
-                    {columns.map((column) => (
+                    {visibleColumns.map((column) => (
 
                         <TaskColumn
                             key={column.id}
                             id={column.id}
                             title={column.title}
-                            tasks={tasks.filter(
+                            tasks={filteredTasks.filter(
                                 (task) =>
                                     task.status ===
                                     column.id
                             )}
                             currentUserId={currentUserId}
-                            onDelete={
-                                handleDeleteTask
-                            }
-                            onEdit={
-                                openEditModal
-                            }
-                            onAssignToSelf={
-                                handleAssignToSelf
-                            }
+                            onDelete={handleDeleteTask}
+                            onEdit={openEditModal}
+                            onAssignToSelf={handleAssignToSelf}
                         />
 
                     ))}
@@ -625,4 +751,4 @@ const UserDashboard = () => {
 };
 
 
-export default UserDashboard;
+export default UserTaskBoard;

@@ -9,15 +9,24 @@ import {
     AuthProvider
 } from "./context/AuthContext";
 
+import {
+    ToastProvider
+} from "./context/ToastContext";
+
 
 import Navbar from "./components/Navbar";
+import ToastContainer from "./components/ToastContainer";
+import AdminLayout from "./components/admin/AdminLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import UserDashboard from "./pages/UserDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import UserOverview from "./pages/user/UserOverview";
+import UserTaskBoard from "./pages/user/UserTaskBoard";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminTasks from "./pages/admin/AdminTasks";
 
 
 function App() {
@@ -28,84 +37,121 @@ function App() {
 
             <AuthProvider>
 
-                <Navbar />
+                <ToastProvider>
 
-                <Routes>
+                    <Navbar />
 
-                    {/* Home */}
+                    <ToastContainer />
 
-                    <Route
-                        path="/"
-                        element={
-                            <Navigate
-                                to="/login"
-                                replace
+                    <Routes>
+
+                        <Route
+                            path="/"
+                            element={
+                                <Navigate
+                                    to="/login"
+                                    replace
+                                />
+                            }
+                        />
+
+
+                        <Route
+                            path="/login"
+                            element={<Login />}
+                        />
+
+
+                        <Route
+                            path="/register"
+                            element={<Register />}
+                        />
+
+
+                        <Route
+                            path="/dashboard"
+                            element={
+
+                                <ProtectedRoute>
+
+                                    <UserOverview />
+
+                                </ProtectedRoute>
+
+                            }
+                        />
+
+
+                        <Route
+                            path="/board"
+                            element={
+
+                                <ProtectedRoute>
+
+                                    <UserTaskBoard />
+
+                                </ProtectedRoute>
+
+                            }
+                        />
+
+
+                        <Route
+                            path="/admin"
+                            element={
+
+                                <ProtectedRoute
+                                    adminOnly={true}
+                                >
+
+                                    <AdminLayout />
+
+                                </ProtectedRoute>
+
+                            }
+                        >
+
+                            <Route
+                                index
+                                element={
+                                    <Navigate
+                                        to="dashboard"
+                                        replace
+                                    />
+                                }
                             />
-                        }
-                    />
 
-
-                    {/* Authentication */}
-
-                    <Route
-                        path="/login"
-                        element={<Login />}
-                    />
-
-
-                    <Route
-                        path="/register"
-                        element={<Register />}
-                    />
-
-
-                    {/* User Dashboard */}
-
-                    <Route
-                        path="/dashboard"
-                        element={
-
-                            <ProtectedRoute>
-
-                                <UserDashboard />
-
-                            </ProtectedRoute>
-
-                        }
-                    />
-
-
-                    {/* Admin Dashboard */}
-
-                    <Route
-                        path="/admin"
-                        element={
-
-                            <ProtectedRoute
-                                adminOnly={true}
-                            >
-
-                                <AdminDashboard />
-
-                            </ProtectedRoute>
-
-                        }
-                    />
-
-
-                    {/* Unknown route */}
-
-                    <Route
-                        path="*"
-                        element={
-                            <Navigate
-                                to="/"
-                                replace
+                            <Route
+                                path="dashboard"
+                                element={<AdminOverview />}
                             />
-                        }
-                    />
 
-                </Routes>
+                            <Route
+                                path="users"
+                                element={<AdminUsers />}
+                            />
+
+                            <Route
+                                path="tasks"
+                                element={<AdminTasks />}
+                            />
+
+                        </Route>
+
+
+                        <Route
+                            path="*"
+                            element={
+                                <Navigate
+                                    to="/"
+                                    replace
+                                />
+                            }
+                        />
+
+                    </Routes>
+
+                </ToastProvider>
 
             </AuthProvider>
 

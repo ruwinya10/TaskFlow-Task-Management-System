@@ -21,11 +21,17 @@ const Navbar = () => {
     };
 
 
+    const homePath =
+        user?.role === "admin"
+            ? "/admin/dashboard"
+            : "/dashboard";
+
+
     return (
         <nav className="navbar">
 
             <div className="navbar-brand">
-                <Link to="/">
+                <Link to={homePath}>
                     Less Taxi
                 </Link>
             </div>
@@ -39,9 +45,43 @@ const Navbar = () => {
                         Hi, {user.name}
                     </span>
 
-                    <span className="role-badge">
+                    <span className={`role-badge role-${user.role}`}>
                         {user.role}
                     </span>
+
+
+                    {user.role === "admin" ? (
+
+                        <Link
+                            to="/admin/dashboard"
+                            className="nav-link-button"
+                        >
+                            Admin
+                        </Link>
+
+                    ) : (
+
+                        <>
+
+                            <Link
+                                to="/dashboard"
+                                className="nav-link-button"
+                            >
+                                Dashboard
+                            </Link>
+
+
+                            <Link
+                                to="/board"
+                                className="nav-link-button"
+                            >
+                                Task Board
+                            </Link>
+
+                        </>
+
+                    )}
+
 
                     <button
                         onClick={handleLogout}
