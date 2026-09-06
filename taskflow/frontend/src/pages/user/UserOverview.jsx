@@ -163,6 +163,11 @@ const UserOverview = () => {
 
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [viewFilter, setViewFilter] = useState("all");
+
+    const currentUserId = user?._id || user?.id;
 
 
     useEffect(() => {
@@ -197,18 +202,58 @@ const UserOverview = () => {
     }, [showToast]);
 
 
+    const filteredTasks = useMemo(() => tasks.filter((task) => {
+        const creatorId =
+            task.creator?._id?.toString() ||
+            task.creator?.toString();
+
+        const assignedId =
+            task.assignedUser?._id?.toString() ||
+            task.assignedUser?.toString() ||
+            null;
+
+        const matchesSearch =
+            task.title.toLowerCase().includes(search.toLowerCase()) ||
+            (task.description || "")
+                .toLowerCase()
+                .includes(search.toLowerCase());
+
+        const matchesStatus =
+            statusFilter === "all" ||
+            task.status === statusFilter;
+
+        const matchesView =
+            viewFilter === "all" ||
+            (viewFilter === "created" &&
+                creatorId === currentUserId) ||
+            (viewFilter === "assigned" &&
+                assignedId === currentUserId) ||
+            (viewFilter === "unassigned" &&
+                creatorId === currentUserId &&
+                !assignedId);
+
+        return matchesSearch && matchesStatus && matchesView;
+    }), [
+        tasks,
+        search,
+        statusFilter,
+        viewFilter,
+        currentUserId
+    ]);
+
+
     const stats = useMemo(() => ({
-        total: tasks.length,
-        todo: tasks.filter(
+        total: filteredTasks.length,
+        todo: filteredTasks.filter(
             (task) => task.status === "todo"
         ).length,
-        doing: tasks.filter(
+        doing: filteredTasks.filter(
             (task) => task.status === "doing"
         ).length,
-        done: tasks.filter(
+        done: filteredTasks.filter(
             (task) => task.status === "done"
         ).length
-    }), [tasks]);
+    }), [filteredTasks]);
 
 
     const chartSegments = useMemo(() =>
@@ -231,14 +276,14 @@ const UserOverview = () => {
 
 
     const recentTasks = useMemo(() =>
-        [...tasks]
+        [...filteredTasks]
             .sort(
                 (a, b) =>
                     new Date(b.updatedAt || b.createdAt) -
                     new Date(a.updatedAt || a.createdAt)
             )
             .slice(0, 5),
-        [tasks]
+        [filteredTasks]
     );
 
 
@@ -272,6 +317,49 @@ const UserOverview = () => {
                 >
                     Open Task Board
                 </Link>
+
+            </div>
+
+
+            <div className="filter-bar filter-bar-inline">
+
+                <input
+                    type="text"
+                    className="filter-input"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={(event) =>
+                        setSearch(event.target.value)
+                    }
+                />
+
+
+                <select
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(event) =>
+                        setStatusFilter(event.target.value)
+                    }
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="todo">To Do</option>
+                    <option value="doing">In Progress</option>
+                    <option value="done">Done</option>
+                </select>
+
+
+                <select
+                    className="filter-select"
+                    value={viewFilter}
+                    onChange={(event) =>
+                        setViewFilter(event.target.value)
+                    }
+                >
+                    <option value="all">All Tasks</option>
+                    <option value="created">Created by Me</option>
+                    <option value="assigned">Assigned to Me</option>
+                    <option value="unassigned">My Unassigned</option>
+                </select>
 
             </div>
 

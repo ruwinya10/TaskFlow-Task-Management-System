@@ -160,10 +160,10 @@ const AdminOverview = () => {
             totalTasks: tasks.length,
             todoCount: tasks.filter((task) => task.status === "todo").length,
             doingCount: tasks.filter((task) => task.status === "doing").length,
+            doneCount: tasks.filter((task) => task.status === "done").length,
             recentCount: tasks.filter(
                 (task) => new Date(task.createdAt) >= recentStart
-            ).length,
-            unassignedCount: tasks.filter((task) => !task.assignedUser).length
+            ).length
         };
     }, [users, tasks]);
 
@@ -189,6 +189,21 @@ const AdminOverview = () => {
         })),
         [tasks]
     );
+
+    const assignmentSegments = useMemo(() => [
+        {
+            id: "assigned",
+            label: "Assigned",
+            color: "#22c55e",
+            value: tasks.filter((task) => !!task.assignedUser).length
+        },
+        {
+            id: "unassigned",
+            label: "Unassigned",
+            color: "#94a3b8",
+            value: tasks.filter((task) => !task.assignedUser).length
+        }
+    ], [tasks]);
 
     const recentTaskPoints = useMemo(() => {
         const today = new Date();
@@ -241,6 +256,10 @@ const AdminOverview = () => {
                     <span>Total Tasks</span>
                     <strong>{stats.totalTasks}</strong>
                 </div>
+                <div className="stat-card stat-card-tasks">
+                    <span>Recent Tasks</span>
+                    <strong>{stats.recentCount}</strong>
+                </div>
                 <div className="stat-card stat-card-todo">
                     <span>To Do</span>
                     <strong>{stats.todoCount}</strong>
@@ -249,13 +268,9 @@ const AdminOverview = () => {
                     <span>In Progress</span>
                     <strong>{stats.doingCount}</strong>
                 </div>
-                <div className="stat-card stat-card-tasks">
-                    <span>Recent Tasks</span>
-                    <strong>{stats.recentCount}</strong>
-                </div>
-                <div className="stat-card stat-card-unassigned">
-                    <span>Unassigned</span>
-                    <strong>{stats.unassignedCount}</strong>
+                <div className="stat-card stat-card-done">
+                    <span>Completed</span>
+                    <strong>{stats.doneCount}</strong>
                 </div>
             </div>
 
@@ -288,9 +303,17 @@ const AdminOverview = () => {
                         ))}
                     </div>
                 </section>
-                <section className="chart-card admin-line-card">
+                <section className="chart-card">
                     <h2>Tasks Created (Last 7 Days)</h2>
                     <LineChart points={recentTaskPoints} />
+                </section>
+                <section className="chart-card">
+                    <h2>Task Assignment</h2>
+                    <DonutChart
+                        segments={assignmentSegments}
+                        total={stats.totalTasks}
+                        label="Tasks"
+                    />
                 </section>
             </div>
         </div>

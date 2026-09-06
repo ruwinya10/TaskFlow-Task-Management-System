@@ -865,11 +865,6 @@ select:focus {
 }
 
 
-.admin-line-card {
-    grid-column: 1 / -1;
-}
-
-
 .admin-line-chart {
     display: block;
 
