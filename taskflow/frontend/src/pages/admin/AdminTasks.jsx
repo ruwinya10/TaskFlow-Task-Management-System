@@ -165,7 +165,7 @@ const AdminTasks = () => {
             </div>
 
 
-            <div className="filter-bar filter-bar-wrap">
+            <div className="filter-bar filter-bar-inline">
 
                 <input
                     type="text"

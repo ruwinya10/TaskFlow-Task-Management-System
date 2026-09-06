@@ -107,7 +107,7 @@ const AdminUsers = () => {
             </div>
 
 
-            <div className="filter-bar">
+            <div className="filter-bar filter-bar-inline">
 
                 <input
                     type="text"

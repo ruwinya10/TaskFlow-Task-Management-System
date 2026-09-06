@@ -275,6 +275,8 @@ select:focus {
 
     color: white;
 
+    text-decoration: none;
+
     padding: 11px 18px;
 
     border-radius: 8px;
@@ -312,6 +314,8 @@ select:focus {
     border: 1px solid #d1d5db;
 
     background: white;
+
+    text-decoration: none;
 
     padding: 11px 18px;
 
@@ -597,7 +601,7 @@ select:focus {
 
 
 .task-card-header h3 {
-    font-size: 16px;
+    font-size: 17px;
 
     margin-bottom: 0;
 }
@@ -609,14 +613,14 @@ select:focus {
 
 
 .task-content h3 {
-    font-size: 16px;
+    font-size: 17px;
 
     margin-bottom: 7px;
 }
 
 
 .task-content p {
-    font-size: 13px;
+    font-size: 14px;
 
     color: #6b7280;
 
@@ -635,7 +639,7 @@ select:focus {
 
     color: #6b7280;
 
-    font-size: 11px;
+    font-size: 12px;
 }
 
 
@@ -659,7 +663,7 @@ select:focus {
 
     cursor: pointer;
 
-    font-size: 12px;
+    font-size: 13px;
 
     transition:
         background 0.2s ease,
@@ -853,6 +857,63 @@ select:focus {
 
 .stats-grid-admin {
     grid-template-columns: repeat(3, 1fr);
+}
+
+
+.admin-charts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+
+.admin-line-card {
+    grid-column: 1 / -1;
+}
+
+
+.admin-line-chart {
+    display: block;
+
+    width: 100%;
+
+    max-width: 720px;
+
+    margin: 0 auto;
+}
+
+
+.line-chart-grid {
+    stroke: #e5e7eb;
+
+    stroke-width: 1;
+}
+
+
+.line-chart-path {
+    fill: none;
+
+    stroke: #4f46e5;
+
+    stroke-width: 3;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+.line-chart-point {
+    fill: #4f46e5;
+
+    stroke: white;
+
+    stroke-width: 2;
+}
+
+
+.line-chart-label {
+    fill: #6b7280;
+
+    font-size: 11px;
 }
 
 
@@ -1533,7 +1594,9 @@ th {
 
     top: 85px;
 
-    right: 24px;
+    left: 50%;
+
+    transform: translateX(-50%);
 
     z-index: 2000;
 
@@ -1543,7 +1606,7 @@ th {
 
     gap: 10px;
 
-    max-width: 380px;
+    width: min(380px, calc(100vw - 32px));
 }
 
 
@@ -1887,11 +1950,7 @@ th {
 
 
     .toast-container {
-        left: 16px;
-
-        right: 16px;
-
-        max-width: none;
+        width: calc(100vw - 32px);
     }
 
 

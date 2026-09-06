@@ -36,11 +36,18 @@ const TaskModal = ({
         return null;
     }
 
+    const isTaskChanged = !task ||
+        title !== task.title ||
+        description !== (task.description || "");
+
 
     const handleSubmit = (e) => {
 
         e.preventDefault();
 
+        if (!isTaskChanged) {
+            return;
+        }
 
         onSave({
             title,
@@ -126,6 +133,7 @@ const TaskModal = ({
                         <button
                             type="submit"
                             className="primary-button"
+                            disabled={!isTaskChanged}
                         >
                             {task
                                 ? "Update Task"

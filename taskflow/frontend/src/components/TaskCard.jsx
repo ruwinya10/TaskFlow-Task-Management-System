@@ -43,6 +43,13 @@ const TaskCard = ({
         currentUserId
     );
 
+    const assignedUserId =
+        task.assignedUser?._id?.toString() ||
+        task.assignedUser?.toString();
+
+    const isAssignedToCurrentUser =
+        assignedUserId === currentUserId?.toString();
+
     const {
         attributes,
         listeners,
@@ -104,6 +111,11 @@ const TaskCard = ({
                     </small>
 
                     <small>
+                        Updated:{" "}
+                        {formatDate(task.updatedAt)}
+                    </small>
+
+                    <small>
                         Created by:{" "}
                         {task.creator?.name ||
                             "Unknown"}
@@ -116,6 +128,8 @@ const TaskCard = ({
 
                         {task.assignedUser?.name ||
                             "Unassigned"}
+
+                        {isAssignedToCurrentUser && " (you)"}
 
                     </small>
 
