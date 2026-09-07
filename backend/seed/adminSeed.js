@@ -15,7 +15,7 @@ const createAdmin = async () => {
         await connectDB();
 
 
-        const adminEmail = "admin@lesstaxi.com";
+        const adminEmail = "admin@taskflow.com";
 
 
         const existingAdmin = await User.findOne({
@@ -38,7 +38,7 @@ const createAdmin = async () => {
 
 
         await User.create({
-            name: "Less Taxi Admin",
+            name: "TaskFlow Admin",
             email: adminEmail,
             password: hashedPassword,
             role: "admin"
@@ -47,7 +47,7 @@ const createAdmin = async () => {
 
         console.log("Admin created successfully.");
 
-        console.log("Email: admin@lesstaxi.com");
+        console.log("Email: admin@taskflow.com");
 
         console.log("Password: Admin123!");
 

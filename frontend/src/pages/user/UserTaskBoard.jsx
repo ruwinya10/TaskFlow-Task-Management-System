@@ -29,7 +29,6 @@ import { getTaskPermissions } from "../../utils/taskPermissions";
 import TaskColumn from "../../components/TaskColumn";
 import TaskModal from "../../components/TaskModal";
 
-
 const columns = [
     {
         id: "todo",
