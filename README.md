@@ -1,4 +1,4 @@
-# TaskFlow – MERN Task Management Application
+# TaskFlow – Task Management Application
 
 A full-stack Trello-like task management application developed as part of the **Software Engineer Intern Technical Assignment**.
 
